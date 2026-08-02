@@ -60,6 +60,20 @@
   }
 }
 
+/* Hide scrollbars everywhere by default — content stays scrollable via
+   touch/wheel/keyboard, only the visible scrollbar track/thumb is removed.
+   Applies globally so no page (tab pills, tables, cards, etc.) shows a
+   scrollbar strip. */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge (Chromium) */
+  width: 0;
+  height: 0;
+}
+
 /* Skeleton loader shimmer */
 .skeleton {
   @apply bg-surface-sunken rounded-md animate-skeleton;
