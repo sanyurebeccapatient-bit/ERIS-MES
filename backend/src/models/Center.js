@@ -9,7 +9,7 @@ const centerSchema = new Schema(
     sector: { type: String, trim: true },
     address: { type: String, trim: true },
     location: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
+      type: { type: String, enum: ['Point'], default: undefined },
       coordinates: { type: [Number], default: undefined }, // [lng, lat]
     },
     manager: { type: Schema.Types.ObjectId, ref: 'User', default: null },
@@ -19,6 +19,6 @@ const centerSchema = new Schema(
   { timestamps: true }
 )
 
-centerSchema.index({ location: '2dsphere' })
+centerSchema.index({ location: '2dsphere' }, { sparse: true })
 
 export default mongoose.model('Center', centerSchema)

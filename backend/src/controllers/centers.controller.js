@@ -4,6 +4,15 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { AppError } from '../utils/AppError.js'
 import { logAudit } from '../utils/audit.js'
 
+// Drops incomplete GeoJSON (e.g. { type: 'Point' } with no coordinates) so it
+// never reaches the 2dsphere index, which cannot index a Point missing coordinates.
+function sanitizeLocation(payload) {
+  if (payload.location && (!Array.isArray(payload.location.coordinates) || payload.location.coordinates.length !== 2)) {
+    delete payload.location
+  }
+  return payload
+}
+
 /** GET /api/centers */
 export const listCenters = asyncHandler(async (req, res) => {
   const centers = await Center.find({ isActive: true }).populate('manager', 'name phone').sort({ name: 1 })
@@ -27,14 +36,14 @@ export const listCenters = asyncHandler(async (req, res) => {
 
 /** POST /api/centers */
 export const createCenter = asyncHandler(async (req, res) => {
-  const center = await Center.create(req.body)
+  const center = await Center.create(sanitizeLocation(req.body))
   await logAudit({ actor: req.user._id, action: 'center.create', entity: { kind: 'Center', id: center._id }, metadata: { name: center.name }, ipAddress: req.ip })
   res.status(201).json(center)
 })
 
 /** PATCH /api/centers/:id */
 export const updateCenter = asyncHandler(async (req, res) => {
-  const center = await Center.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+  const center = await Center.findByIdAndUpdate(req.params.id, sanitizeLocation(req.body), { new: true, runValidators: true })
   if (!center) throw new AppError('Center not found', 404)
   res.json(center)
 })

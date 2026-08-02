@@ -10,6 +10,7 @@
     "seed": "node src/utils/seed.js",
     "create-admin": "node src/utils/create-admin.js",
     "fix-child-locations": "node src/utils/fix-child-locations.js",
+    "fix-center-locations": "node src/utils/fix-center-locations.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
