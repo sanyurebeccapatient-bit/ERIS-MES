@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ERIS MES</string>
+    <string name="package_name">rw.org.eris.ecd</string>
+    <string name="title_activity_main">ERIS MES</string>
+    <string name="custom_url_scheme">rw.org.eris.ecd</string>
+    <string name="server_url">https://localhost</string>
+</resources>
