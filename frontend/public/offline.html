@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />
+    <meta name="theme-color" content="#0F6B5C" />
+    <title>No internet connection — ERIS MES</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
+        background: #FAF8F5;
+        color: #1F2A26;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem 1.5rem;
+      }
+      .icon {
+        width: 84px;
+        height: 84px;
+        border-radius: 999px;
+        background: rgba(15, 107, 92, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+      }
+      .icon svg { width: 40px; height: 40px; color: #0F6B5C; }
+      h1 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        font-size: 0.95rem;
+        color: #5B6863;
+        max-width: 320px;
+        line-height: 1.5;
+        margin: 0 0 0.5rem;
+      }
+      .tip {
+        font-size: 0.8rem;
+        color: #8A968F;
+        max-width: 320px;
+        margin: 0.75rem 0 1.75rem;
+      }
+      button {
+        appearance: none;
+        border: none;
+        background: #0F6B5C;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.9rem 2rem;
+        border-radius: 14px;
+        cursor: pointer;
+      }
+      button:active { background: #0c5449; }
+      .status {
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: #8A968F;
+      }
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #C7CDCA;
+        margin-right: 6px;
+      }
+      .dot.online { background: #2FA36B; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12 20.25h.008v.008H12v-.008z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+        </svg>
+      </div>
+      <h1>No internet connection</h1>
+      <p>You're currently offline. Check your Wi-Fi or mobile data connection and try again.</p>
+      <p class="tip">Any work you already saved is safe on this device and will sync automatically once you're back online.</p>
+      <button id="retryBtn">Try again</button>
+      <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Checking connection…</span></div>
+    </div>
+    <script>
+      var dot = document.getElementById('statusDot');
+      var text = document.getElementById('statusText');
+      var retryBtn = document.getElementById('retryBtn');
+
+      function updateStatus() {
+        if (navigator.onLine) {
+          dot.classList.add('online');
+          text.textContent = "You're back online. Loading your dashboard…";
+          setTimeout(function () {
+            window.location.href = '/';
+          }, 600);
+        } else {
+          dot.classList.remove('online');
+          text.textContent = 'Still offline';
+        }
+      }
+
+      retryBtn.addEventListener('click', function () {
+        text.textContent = 'Checking connection…';
+        if (navigator.onLine) {
+          window.location.href = '/';
+        } else {
+          // Force a real network probe in case navigator.onLine is stale
+          fetch('/favicon.svg', { cache: 'no-store' })
+            .then(function () { window.location.href = '/'; })
+            .catch(updateStatus);
+        }
+      });
+
+      window.addEventListener('online', updateStatus);
+      window.addEventListener('offline', updateStatus);
+      updateStatus();
+    </script>
+  </body>
+</html>
