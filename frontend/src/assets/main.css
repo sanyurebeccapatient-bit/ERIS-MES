@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-ink font-sans antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  .dark body {
+    @apply bg-surface-dark text-ink-inverse;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
+  /* Visible focus rings everywhere — accessibility, not decoration */
+  :focus-visible {
+    outline: 2px solid theme('colors.accent.500');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Prevent iOS input zoom on focus (inputs must be >=16px) */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+@layer components {
+  .touch-target {
+    @apply min-h-touch min-w-touch flex items-center justify-center;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+}
+
+/* Skeleton loader shimmer */
+.skeleton {
+  @apply bg-surface-sunken rounded-md animate-skeleton;
+}
+.dark .skeleton {
+  @apply bg-white/10;
+}
