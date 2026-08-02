@@ -20,10 +20,10 @@ Node.js/Express + MongoDB backend for the ERIS MES field platform. Built to matc
 npm install
 cp .env.example .env     # then edit values, especially JWT secrets and MONGO_URI
 npm run seed              # populates the database with demo data
-npm run dev                # starts on https://www.eris-mes.onrender.com with auto-reload
+npm run dev                # starts on https://eris-mes.onrender.com with auto-reload
 ```
 
-Health check: `GET https://www.eris-mes.onrender.com/api/health`
+Health check: `GET https://eris-mes.onrender.com/api/health`
 
 ### Seed accounts
 

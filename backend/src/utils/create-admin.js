@@ -43,8 +43,8 @@ async function createAdmin() {
     process.exit(1)
   }
 
-  if (!/^\d{4,6}$/.test(String(pin))) {
-    console.error('[create-admin] PIN must be 4-6 digits.')
+  if (!/^\d{6}$/.test(String(pin))) {
+    console.error('[create-admin] PIN must be exactly 6 digits.')
     process.exit(1)
   }
 

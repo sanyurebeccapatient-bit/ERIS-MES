@@ -1,5 +1,12 @@
 import mongoose from 'mongoose'
+import dns from 'node:dns'
 import { env } from './env.js'
+
+// Some local/ISP routers (common cause on Windows here) advertise a DNS
+// server that doesn't support SRV record queries, which breaks the
+// mongodb+srv:// connection string with `querySrv ECONNREFUSED`.
+// Force Node's resolver to use public DNS servers that do support it.
+dns.setServers(['8.8.8.8', '1.1.1.1'])
 
 export async function connectDB() {
   mongoose.set('strictQuery', true)

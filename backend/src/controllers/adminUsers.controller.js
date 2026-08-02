@@ -33,6 +33,7 @@ export const listUsers = asyncHandler(async (req, res) => {
 export const createUser = asyncHandler(async (req, res) => {
   const { name, phone, pin, role, center } = req.body
   if (!name || !phone || !pin) throw new AppError('name, phone, and pin are required', 400)
+  if (!/^\d{6}$/.test(pin)) throw new AppError('PIN must be exactly 6 digits', 400)
 
   const existing = await User.findOne({ phone: normalizePhone(phone) })
   if (existing) throw new AppError('A user with this phone number already exists', 409)
@@ -93,8 +94,8 @@ export const updateUser = asyncHandler(async (req, res) => {
 /** POST /api/admin/users/:id/reset-pin  { newPin } — direct reset, no pending request needed */
 export const resetUserPin = asyncHandler(async (req, res) => {
   const { newPin } = req.body
-  if (!newPin || !/^\d{4,6}$/.test(newPin)) {
-    throw new AppError('New PIN must be 4-6 digits', 400)
+  if (!newPin || !/^\d{6}$/.test(newPin)) {
+    throw new AppError('New PIN must be exactly 6 digits', 400)
   }
 
   const user = await User.findById(req.params.id)

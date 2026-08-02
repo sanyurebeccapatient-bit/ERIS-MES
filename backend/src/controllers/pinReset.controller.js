@@ -66,8 +66,8 @@ export const listPinResetRequests = asyncHandler(async (req, res) => {
  */
 export const resolvePinResetRequest = asyncHandler(async (req, res) => {
   const { newPin } = req.body
-  if (!newPin || !/^\d{4,6}$/.test(newPin)) {
-    throw new AppError('New PIN must be 4-6 digits', 400)
+  if (!newPin || !/^\d{6}$/.test(newPin)) {
+    throw new AppError('New PIN must be exactly 6 digits', 400)
   }
 
   const request = await PinResetRequest.findById(req.params.id)
