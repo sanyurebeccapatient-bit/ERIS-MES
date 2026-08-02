@@ -8,7 +8,7 @@
  *
  * TO CONNECT A REAL BACKEND LATER:
  *   1. Set USE_MOCK_API to false in src/constants/index.js
- *   2. Set VITE_API_BASE_URL in a .env file (e.g. https://www.eris-mes.onrender.com/api)
+ *   2. Set VITE_API_BASE_URL in a .env file (e.g. https://eris-mes.onrender.com/api)
  *   3. Implement matching Express routes returning the same shapes
  *      documented in each service file's JSDoc.
  * No component or store code needs to change.

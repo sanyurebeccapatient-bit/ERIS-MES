@@ -211,8 +211,8 @@ function openResetPinModal(request) {
 
 async function confirmResetPin() {
   resetPinError.value = ''
-  if (!/^\d{4,6}$/.test(newPinValue.value.trim())) {
-    resetPinError.value = 'New PIN must be 4-6 digits.'
+  if (!/^\d{6}$/.test(newPinValue.value.trim())) {
+    resetPinError.value = 'New PIN must be exactly 6 digits.'
     return
   }
   resettingPin.value = true
@@ -247,8 +247,8 @@ async function submitNewUser() {
     createError.value = 'Name, phone, and PIN are required.'
     return
   }
-  if (!/^\d{4,6}$/.test(pin.trim())) {
-    createError.value = 'PIN must be 4-6 digits.'
+  if (!/^\d{6}$/.test(pin.trim())) {
+    createError.value = 'PIN must be exactly 6 digits.'
     return
   }
   creating.value = true
@@ -494,10 +494,10 @@ async function submitEditUser() {
             type="password"
             inputmode="numeric"
             maxlength="6"
-            placeholder="4-6 digits"
+            placeholder="6 digits"
             class="w-full h-touch px-4 rounded-xl bg-surface border border-border text-sm tracking-widest focus:border-primary-400"
           />
-          <p class="text-xs text-ink-faint mt-1">The new user signs in with this phone number and PIN. They can change it later from their profile.</p>
+          <p class="text-xs text-ink-faint mt-1">The PIN must be exactly 6 digits. The new user signs in with this phone number and PIN. They can change it later from their profile.</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-ink mb-1.5">Role</label>
@@ -590,9 +590,10 @@ async function submitEditUser() {
             type="password"
             inputmode="numeric"
             maxlength="6"
-            placeholder="4-6 digits"
+            placeholder="6 digits"
             class="w-full h-touch px-4 rounded-xl bg-surface border border-border text-sm tracking-widest focus:border-primary-400"
           />
+          <p class="text-xs text-ink-faint mt-1">The PIN must be exactly 6 digits.</p>
         </div>
         <p v-if="resetPinError" class="text-sm text-danger-600">{{ resetPinError }}</p>
       </div>
