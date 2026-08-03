@@ -336,7 +336,7 @@ async function submitEditUser() {
             @input="onSearchInput"
           />
         </div>
-        <div class="flex-shrink-0">
+        <div class="flex-shrink-0 min-w-[10rem]">
           <BaseSelect v-model="roleFilter" :options="roleOptions" size="sm" @change="load" />
         </div>
         <IconAddButton label="Add user" @click="openAddModal" />

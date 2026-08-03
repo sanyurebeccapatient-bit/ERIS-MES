@@ -1,13 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Sibling route ordering for slide direction
-const caregiverRouteOrder = [
-  'caregiver-dashboard',
-  'children',
-  'visits',
-  'notifications',
-]
-
 const routes = [
   {
     path: '/',
@@ -88,13 +80,6 @@ router.beforeEach(async (to, from) => {
   // Keep admins/supervisors out of the caregiver app area
   if (to.path.startsWith('/app') && authStore.isAdminRole) {
     return { name: 'admin-dashboard' }
-  }
-
-  // Store the 'from' route index so TransitionWrapper knows slide direction
-  const fromIdx = caregiverRouteOrder.indexOf(from.name)
-  if (fromIdx >= 0) {
-    to.meta = to.meta || {}
-    to.meta.fromIndex = fromIdx
   }
 
   return true

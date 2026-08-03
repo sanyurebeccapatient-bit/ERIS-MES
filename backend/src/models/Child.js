@@ -27,6 +27,13 @@ const childSchema = new Schema(
       coordinates: { type: [Number], default: undefined },
     },
 
+    // Flexible custom key-value details added by caregivers
+    customDetails: {
+      type: Map,
+      of: String,
+      default: {},
+    },
+
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

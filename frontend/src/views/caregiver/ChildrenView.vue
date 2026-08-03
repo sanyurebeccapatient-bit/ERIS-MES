@@ -22,6 +22,66 @@ import PhotoCapture from '@/components/forms/PhotoCapture.vue'
 import { formatRwandaPhone, toCompactPhone, blockNonDigitKey } from '@/composables/usePhoneFormat.js'
 import { resolveMediaUrl } from '@/utils/mediaUrl.js'
 
+// ---------------------------------------------------------------------
+// Custom field templates (persisted in localStorage per user)
+// ---------------------------------------------------------------------
+const CUSTOM_FIELDS_KEY = 'eris_custom_child_fields'
+
+function loadFieldTemplates() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_FIELDS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveFieldTemplates(templates) {
+  localStorage.setItem(CUSTOM_FIELDS_KEY, JSON.stringify(templates))
+}
+
+const customFieldTemplates = ref(loadFieldTemplates())
+
+/** Values for the current form's custom fields (keyed by field label) */
+const customValues = reactive({})
+
+function addCustomField() {
+  customFieldTemplates.value.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    label: '',
+    type: 'text', // 'text' or 'select'
+    options: '',   // comma-separated options for select type
+  })
+  saveFieldTemplates(customFieldTemplates.value)
+}
+
+function removeCustomField(id) {
+  const idx = customFieldTemplates.value.findIndex(f => f.id === id)
+  if (idx !== -1) {
+    const label = customFieldTemplates.value[idx].label
+    delete customValues[label]
+    customFieldTemplates.value.splice(idx, 1)
+    saveFieldTemplates(customFieldTemplates.value)
+  }
+}
+
+function updateFieldTemplate(id, patch) {
+  const field = customFieldTemplates.value.find(f => f.id === id)
+  if (field) {
+    // If label changed, migrate the value key
+    if (patch.label !== undefined && patch.label !== field.label) {
+      const oldLabel = field.label
+      customValues[patch.label] = customValues[oldLabel] || ''
+      if (oldLabel) delete customValues[oldLabel]
+    }
+    Object.assign(field, patch)
+    saveFieldTemplates(customFieldTemplates.value)
+  }
+}
+
+function selectOptionsFor(field) {
+  if (!field.options) return []
+  return field.options.split(',').map(o => o.trim()).filter(Boolean).map(o => ({ value: o, label: o }))
+}
+
 const authStore = useAuthStore()
 const router = useRouter()
 const { t } = useI18n()
@@ -94,6 +154,13 @@ const emptyForm = () => ({
   guardianPhone: '+250 ',
   healthFlag: '',
 })
+
+function resetCustomValues() {
+  Object.keys(customValues).forEach(k => delete customValues[k])
+  customFieldTemplates.value.forEach(f => {
+    if (f.label) customValues[f.label] = ''
+  })
+}
 const form = reactive(emptyForm())
 
 function onGuardianPhoneInput(e) {
@@ -116,6 +183,7 @@ const healthFlagOptions = computed(() => [
 function openAddModal() {
   formMode.value = 'add'
   Object.assign(form, emptyForm())
+  resetCustomValues()
   formError.value = ''
   activeChild.value = null
   showFormModal.value = true
@@ -131,6 +199,18 @@ function openEditModal(child) {
     guardianName: child.guardian?.name || child.guardian || '',
     guardianPhone: formatRwandaPhone(child.guardian?.phone || child.guardianPhone || ''),
     healthFlag: child.healthFlag || '',
+  })
+  // Populate custom values from child's saved customDetails
+  Object.keys(customValues).forEach(k => delete customValues[k])
+  if (child.customDetails && typeof child.customDetails === 'object') {
+    // Mongoose Map serializes to { key: value } object
+    Object.entries(child.customDetails).forEach(([k, v]) => {
+      customValues[k] = v || ''
+    })
+  }
+  // Ensure all templates have a value slot
+  customFieldTemplates.value.forEach(f => {
+    if (f.label && !(f.label in customValues)) customValues[f.label] = ''
   })
   formError.value = ''
   showFormModal.value = true
@@ -148,6 +228,14 @@ async function submitForm() {
 
   saving.value = true
   formError.value = ''
+  // Collect custom details (only fields with a label and a value)
+  const customDetails = {}
+  customFieldTemplates.value.forEach(f => {
+    if (f.label && customValues[f.label]) {
+      customDetails[f.label] = customValues[f.label]
+    }
+  })
+
   const payload = {
     name: form.name.trim(),
     age: form.age === '' ? undefined : Number(form.age),
@@ -158,6 +246,7 @@ async function submitForm() {
     },
     healthFlag: form.healthFlag || null,
   }
+  if (Object.keys(customDetails).length) payload.customDetails = customDetails
   const ownCenter = authStore.user?.center?.id || authStore.user?.center
   if (ownCenter) payload.center = ownCenter
 
@@ -454,6 +543,93 @@ const localeKey = refreshKey
         <FormField :label="t('children.healthFlag')" :hint="t('children.healthFlagHint')">
           <BaseSelect v-model="form.healthFlag" :options="healthFlagOptions" />
         </FormField>
+
+        <!-- Custom details section -->
+        <div v-if="customFieldTemplates.length" class="space-y-3 pt-1">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-ink">Custom details</p>
+          </div>
+          <div v-for="field in customFieldTemplates" :key="field.id" class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <input
+                :value="field.label"
+                type="text"
+                placeholder="Field name"
+                class="flex-1 h-9 px-3 rounded-lg bg-surface border border-border text-sm focus:border-primary-400"
+                @input="updateFieldTemplate(field.id, { label: $event.target.value })"
+              />
+              <button
+                type="button"
+                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                :class="field.type === 'text' ? 'bg-primary-50 text-primary-600' : 'bg-surface-sunken text-ink-faint'"
+                title="Switch to text input"
+                @click="updateFieldTemplate(field.id, { type: 'text' })"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                :class="field.type === 'select' ? 'bg-primary-50 text-primary-600' : 'bg-surface-sunken text-ink-faint'"
+                title="Switch to dropdown"
+                @click="updateFieldTemplate(field.id, { type: 'select' })"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 text-danger-500 active:bg-danger-50 transition-colors"
+                title="Remove this field"
+                @click="removeCustomField(field.id)"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+            <!-- Select options (comma-separated, only shown for select type) -->
+            <input
+              v-if="field.type === 'select'"
+              :value="field.options"
+              type="text"
+              placeholder="Options (comma-separated, e.g. Yes, No, N/A)"
+              class="w-full h-9 px-3 rounded-lg bg-surface border border-border text-sm focus:border-primary-400"
+              @input="updateFieldTemplate(field.id, { options: $event.target.value })"
+            />
+            <!-- Value input -->
+            <BaseSelect
+              v-if="field.type === 'select' && field.label && selectOptionsFor(field).length"
+              :model-value="customValues[field.label] || ''"
+              :options="[{ value: '', label: 'Select...' }, ...selectOptionsFor(field)]"
+              size="sm"
+              @update:model-value="customValues[field.label] = $event"
+            />
+            <input
+              v-else-if="field.label"
+              :value="customValues[field.label] || ''"
+              type="text"
+              :placeholder="field.label"
+              class="w-full h-9 px-3 rounded-lg bg-surface border border-border text-sm focus:border-primary-400"
+              @input="customValues[field.label] = $event.target.value"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="w-full h-10 rounded-xl border-2 border-dashed border-border text-sm font-medium text-ink-faint flex items-center justify-center gap-2 active:bg-surface-sunken transition-colors"
+          @click="addCustomField"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add custom detail
+        </button>
+
         <p v-if="formError" class="text-sm text-danger-600">{{ formError }}</p>
       </form>
       <template #footer>
@@ -514,6 +690,16 @@ const localeKey = refreshKey
               {{ healthLabel(activeChild.healthFlag) }}
             </BaseBadge>
             <p v-else class="text-ink font-medium">{{ t('children.none') }}</p>
+          </div>
+        </div>
+        <!-- Custom details display -->
+        <div v-if="activeChild.customDetails && Object.keys(activeChild.customDetails).length" class="space-y-2">
+          <p class="text-xs font-medium text-ink-faint uppercase tracking-wide">Custom details</p>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div v-for="(value, key) in activeChild.customDetails" :key="key">
+              <p class="text-xs text-ink-faint">{{ key }}</p>
+              <p class="text-ink font-medium">{{ value }}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,22 +1,24 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-const router = useRouter()
+const props = defineProps({
+  /** Ordered list of route names that should slide between each other */
+  routeOrder: { type: Array, default: () => [] },
+})
 
-// Track the navigation direction for the slide animation
-const routeOrder = [
-  'caregiver-dashboard',
-  'children',
-  'visits',
-  'notifications',
-]
+const router = useRouter()
+const fromIdx = ref(-1)
+
+// Watch navigation to track direction
+router.afterEach((to, from) => {
+  fromIdx.value = props.routeOrder.indexOf(from.name)
+})
 
 const transitionName = computed(() => {
-  const toIdx = routeOrder.indexOf(router.currentRoute.value.name)
-  const fromIdx = router.currentRoute.value.meta?.fromIndex ?? -1
-  if (fromIdx < 0 || toIdx < 0) return 'none'
-  return toIdx > fromIdx ? 'slide-left' : 'slide-right'
+  const toIdx = props.routeOrder.indexOf(router.currentRoute.value.name)
+  if (fromIdx.value < 0 || toIdx < 0) return 'none'
+  return toIdx > fromIdx.value ? 'slide-left' : 'slide-right'
 })
 
 // Components to keep alive (cache their data between navigations)
@@ -42,7 +44,7 @@ const keepAliveNames = [
 <template>
   <router-view v-slot="{ Component, route }">
     <KeepAlive :include="keepAliveNames">
-      <transition :name="transitionName" mode="out-in">
+      <transition :name="transitionName">
         <component :is="Component" :key="route.path" />
       </transition>
     </KeepAlive>
@@ -53,33 +55,33 @@ const keepAliveNames = [
 /* Slide left: navigating forward (e.g. Home → Children) */
 .slide-left-enter-active,
 .slide-left-leave-active {
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: absolute;
   width: 100%;
+  top: 0;
+  left: 0;
 }
 .slide-left-enter-from {
   transform: translateX(100%);
-  opacity: 0.5;
 }
 .slide-left-leave-to {
-  transform: translateX(-30%);
-  opacity: 0.3;
+  transform: translateX(-100%);
 }
 
 /* Slide right: navigating backward (e.g. Children → Home) */
 .slide-right-enter-active,
 .slide-right-leave-active {
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: absolute;
   width: 100%;
+  top: 0;
+  left: 0;
 }
 .slide-right-enter-from {
-  transform: translateX(-30%);
-  opacity: 0.3;
+  transform: translateX(-100%);
 }
 .slide-right-leave-to {
   transform: translateX(100%);
-  opacity: 0.5;
 }
 
 /* No animation for non-sibling navigation */

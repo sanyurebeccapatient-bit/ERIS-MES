@@ -32,7 +32,7 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-surface md:pl-20" :class="showBottomNav ? 'pb-24 md:pb-0' : ''">
-    <TransitionWrapper />
+    <TransitionWrapper :route-order="caregiverRoutes" />
     <BottomNav v-if="showBottomNav" :key="'bottomnav-' + localeKey" />
   </div>
 </template>
