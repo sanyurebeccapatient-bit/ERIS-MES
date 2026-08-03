@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n, refreshKey } from '@/i18n/index.js'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import StatTile from '@/components/dashboard/StatTile.vue'
 import VisitItem from '@/components/dashboard/VisitItem.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -63,7 +62,6 @@ function goToVisit(visit) {
 
 <template>
   <div :key="'dashboard-' + localeKey">
-    <AppTopBar :title="t('nav.home')" />
 
     <main class="px-4 pt-4 space-y-5">
       <!-- Greeting -->

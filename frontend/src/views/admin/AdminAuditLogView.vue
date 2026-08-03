@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import * as adminService from '@/services/api/admin.service'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -107,7 +106,6 @@ function formatDateTime(iso) {
 
 <template>
   <div>
-    <AdminTopBar title="Audit log" />
 
     <main class="p-4 md:p-6 space-y-5 max-w-[1000px]">
       <div v-if="!loading" class="flex items-center justify-between gap-3">

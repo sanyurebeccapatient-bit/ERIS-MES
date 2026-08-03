@@ -2,7 +2,6 @@
 import { onMounted, ref, computed } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useI18n, refreshKey } from '@/i18n/index.js'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import SkeletonBlock from '@/components/ui/SkeletonBlock.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -50,7 +49,6 @@ const localeKey = refreshKey
 
 <template>
   <div :key="'notif-' + localeKey">
-    <AppTopBar :title="t('notifications.title')" />
 
     <main class="px-4 pt-4 space-y-4">
       <div v-if="!loading && notifications.length" class="flex items-center justify-between gap-3">

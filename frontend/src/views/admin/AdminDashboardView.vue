@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboard'
 import { getHealthAlerts } from '@/services/api/records.service'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import KpiCard from '@/components/dashboard/KpiCard.vue'
 import AttendanceTrendChart from '@/components/charts/AttendanceTrendChart.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -65,7 +64,6 @@ onMounted(async () => {
 
 <template>
   <div>
-    <AdminTopBar title="Overview" />
 
     <main class="p-4 md:p-6 space-y-6 max-w-[1600px]">
       <!-- KPI grid -->

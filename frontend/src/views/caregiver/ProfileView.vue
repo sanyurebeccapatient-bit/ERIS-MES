@@ -2,7 +2,6 @@
 import { onMounted, ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
@@ -176,7 +175,6 @@ const localeKey = refreshKey
 
 <template>
   <div :key="'profile-' + localeKey">
-    <AppTopBar :title="t('profile.title')" />
 
     <main class="px-4 pt-4 pb-8 space-y-5">
       <!-- User card with photo -->

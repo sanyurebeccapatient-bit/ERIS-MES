@@ -3,7 +3,6 @@ import { onMounted, ref, computed } from 'vue'
 import * as adminService from '@/services/api/admin.service'
 import jsPDF from 'jspdf'
 import autoTable, { applyPlugin } from 'jspdf-autotable'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -241,7 +240,6 @@ async function exportPDF() {
 
 <template>
   <div>
-    <AdminTopBar title="Reports" />
 
     <main class="p-4 md:p-6 space-y-5 max-w-[1000px]">
       <!-- Search + Export -->

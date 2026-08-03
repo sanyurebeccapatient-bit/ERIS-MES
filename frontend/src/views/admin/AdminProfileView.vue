@@ -2,7 +2,6 @@
 import { onMounted, ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
@@ -171,7 +170,6 @@ function userInitials() {
 
 <template>
   <div>
-    <AdminTopBar title="Profile" />
 
     <main class="px-4 pt-4 pb-8 md:px-6 space-y-5 max-w-[720px]">
       <!-- User card with photo -->

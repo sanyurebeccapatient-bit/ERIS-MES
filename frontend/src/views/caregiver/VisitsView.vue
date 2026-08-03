@@ -3,7 +3,6 @@ import { onMounted, ref, computed, nextTick } from 'vue'
 import { listVisits, createVisit as apiCreateVisit, updateVisit as apiUpdateVisit } from '@/services/api/records.service'
 import { listChildren } from '@/services/api/children.service'
 import { useI18n, refreshKey } from '@/i18n/index.js'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -204,7 +203,6 @@ onMounted(() => {
 
 <template>
   <div :key="'visits-' + localeKey">
-    <AppTopBar :title="t('visits.title')" />
 
     <main class="px-4 pt-4 pb-8 space-y-4">
       <!-- Filter tabs + plan button -->

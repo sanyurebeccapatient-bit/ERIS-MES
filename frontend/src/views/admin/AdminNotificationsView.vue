@@ -2,7 +2,6 @@
 import { onMounted, ref, computed } from 'vue'
 import * as adminService from '@/services/api/admin.service'
 import { listUsers } from '@/services/api/admin.service'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -180,7 +179,6 @@ function toggleSelectAll() {
 
 <template>
   <div>
-    <AdminTopBar title="Notifications" />
 
     <main class="p-4 md:p-6 space-y-5 max-w-[1000px]">
       <!-- Stats strip -->

@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import * as adminService from '@/services/api/admin.service'
-import AdminTopBar from '@/components/layout/AdminTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -207,7 +206,6 @@ async function submitNewCenter() {
 
 <template>
   <div>
-    <AdminTopBar title="Centers" />
 
     <main class="p-4 md:p-6 space-y-5 max-w-[1400px]">
       <div class="flex items-center justify-between">

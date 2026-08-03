@@ -7,8 +7,16 @@ import { useRouter, useRoute } from 'vue-router'
  * Only activates on horizontal swipes (not vertical scrolling).
  * Skips swipe when the gesture starts inside a horizontally scrollable
  * container (filter pills, etc.) so the user can scroll those freely.
+ *
+ * @param {Array} routeList - ordered list of sibling route names.
+ * @param {import('vue').Ref} [containerEl] - optional ref to the DOM node
+ *   that should follow the finger in real time (the sliding page content,
+ *   never the top bar). When provided, dragging is applied directly via
+ *   inline style transforms (no reactive re-render per pixel) for smooth,
+ *   high-performance 1:1 tracking, then either commits to the next route
+ *   or snaps back on release — the same feel as WhatsApp's tab paging.
  */
-export function useSwipeNav(routeList) {
+export function useSwipeNav(routeList, containerEl) {
   const router = useRouter()
   const route = useRoute()
   const startX = ref(0)
@@ -16,6 +24,7 @@ export function useSwipeNav(routeList) {
   const deltaX = ref(0)
   const swiping = ref(false)
   const direction = ref(null) // 'left' | 'right' | null
+  let viewportWidth = 0
 
   function findIndex(name) {
     return routeList.findIndex((r) => (typeof r === 'string' ? r : r.name) === name)
@@ -35,6 +44,14 @@ export function useSwipeNav(routeList) {
     return false
   }
 
+  /** Apply a live transform directly to the DOM node (bypasses Vue's reactivity for perf). */
+  function paint(x, withTransition) {
+    const el = containerEl && containerEl.value
+    if (!el) return
+    el.style.transition = withTransition ? 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+    el.style.transform = x ? `translate3d(${x}px,0,0)` : ''
+  }
+
   function onTouchStart(e) {
     const touch = e.touches[0]
     startX.value = touch.clientX
@@ -42,6 +59,7 @@ export function useSwipeNav(routeList) {
     deltaX.value = 0
     swiping.value = false
     direction.value = null
+    viewportWidth = window.innerWidth || 375
   }
 
   function onTouchMove(e) {
@@ -63,30 +81,69 @@ export function useSwipeNav(routeList) {
 
     if (swiping.value) {
       direction.value = deltaX.value > 0 ? 'right' : 'left'
+
+      // Don't let the drag go past the edge when there's no sibling to reveal
+      const currentIdx = findIndex(route.name)
+      const hasNext = currentIdx !== -1 && !!routeList[currentIdx + 1]
+      const hasPrev = currentIdx !== -1 && !!routeList[currentIdx - 1]
+      let x = deltaX.value
+      if (x < 0 && !hasNext) x = 0
+      if (x > 0 && !hasPrev) x = 0
+
+      // Directly paint the page content — real-time 1:1 finger tracking,
+      // top bar and bottom nav are outside this container so they stay put.
+      paint(x, false)
     }
   }
 
   function onTouchEnd() {
-    if (!swiping.value) return
+    if (!swiping.value) {
+      return
+    }
     const threshold = 80
     const currentIdx = findIndex(route.name)
 
-    if (currentIdx === -1) return
+    if (currentIdx === -1) {
+      paint(0, true)
+      swiping.value = false
+      direction.value = null
+      deltaX.value = 0
+      return
+    }
 
+    let targetName = null
     if (direction.value === 'left' && deltaX.value < -threshold) {
-      // Swipe left → next page
       const next = routeList[currentIdx + 1]
-      if (next) {
-        const name = typeof next === 'string' ? next : next.name
-        router.push({ name })
-      }
+      if (next) targetName = typeof next === 'string' ? next : next.name
     } else if (direction.value === 'right' && deltaX.value > threshold) {
-      // Swipe right → previous page
       const prev = routeList[currentIdx - 1]
-      if (prev) {
-        const name = typeof prev === 'string' ? prev : prev.name
-        router.push({ name })
+      if (prev) targetName = typeof prev === 'string' ? prev : prev.name
+    }
+
+    if (targetName) {
+      // Commit: finish sliding the current page off-screen, then swap routes.
+      const offscreen = direction.value === 'left' ? -viewportWidth : viewportWidth
+      paint(offscreen, true)
+      const el = containerEl && containerEl.value
+      let settled = false
+      const finish = () => {
+        if (settled) return
+        settled = true
+        router.push({ name: targetName })
+        // Reset instantly (no transition) so the new page's own enter
+        // animation takes over cleanly with no leftover offset.
+        requestAnimationFrame(() => paint(0, false))
       }
+      if (el) {
+        el.addEventListener('transitionend', finish, { once: true })
+        // Safety net in case transitionend doesn't fire (e.g. 0-distance edge case)
+        setTimeout(finish, 260)
+      } else {
+        finish()
+      }
+    } else {
+      // Snap back — threshold not met.
+      paint(0, true)
     }
 
     swiping.value = false

@@ -9,7 +9,6 @@ import {
 } from '@/services/api/children.service'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n, refreshKey } from '@/i18n/index.js'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -389,7 +388,6 @@ const localeKey = refreshKey
 
 <template>
   <div :key="'children-' + localeKey">
-    <AppTopBar :title="t('children.title')" />
 
     <main class="px-4 pt-4 pb-8 space-y-4">
       <!-- Search + Add -->
@@ -545,48 +543,48 @@ const localeKey = refreshKey
         </FormField>
 
         <!-- Custom details section -->
-        <div v-if="customFieldTemplates.length" class="space-y-3 pt-1">
+        <div v-if="customFieldTemplates.length" class="space-y-3 pt-1 min-w-0 overflow-x-hidden">
           <div class="flex items-center justify-between">
             <p class="text-sm font-medium text-ink">Custom details</p>
           </div>
-          <div v-for="field in customFieldTemplates" :key="field.id" class="space-y-1.5">
-            <div class="flex items-center gap-2">
+          <div v-for="field in customFieldTemplates" :key="field.id" class="space-y-1.5 min-w-0">
+            <div class="flex items-center gap-1.5 min-w-0">
               <input
                 :value="field.label"
                 type="text"
                 placeholder="Field name"
-                class="flex-1 h-9 px-3 rounded-lg bg-surface border border-border text-sm focus:border-primary-400"
+                class="flex-1 min-w-0 h-8 px-2.5 rounded-lg bg-surface border border-border text-sm focus:border-primary-400"
                 @input="updateFieldTemplate(field.id, { label: $event.target.value })"
               />
               <button
                 type="button"
-                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                class="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                 :class="field.type === 'text' ? 'bg-primary-50 text-primary-600' : 'bg-surface-sunken text-ink-faint'"
                 title="Switch to text input"
                 @click="updateFieldTemplate(field.id, { type: 'text' })"
               >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
               </button>
               <button
                 type="button"
-                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                class="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                 :class="field.type === 'select' ? 'bg-primary-50 text-primary-600' : 'bg-surface-sunken text-ink-faint'"
                 title="Switch to dropdown"
                 @click="updateFieldTemplate(field.id, { type: 'select' })"
               >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
                 </svg>
               </button>
               <button
                 type="button"
-                class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 text-danger-500 active:bg-danger-50 transition-colors"
+                class="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 text-danger-500 active:bg-danger-50 transition-colors"
                 title="Remove this field"
                 @click="removeCustomField(field.id)"
               >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>

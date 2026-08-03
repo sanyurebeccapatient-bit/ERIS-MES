@@ -6,7 +6,6 @@ import { queueWrite, submitOrQueue } from '@/services/offline/syncEngine'
 import { useSyncStore } from '@/stores/sync'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useI18n, refreshKey } from '@/i18n/index.js'
-import AppTopBar from '@/components/layout/AppTopBar.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
@@ -63,7 +62,6 @@ const localeKey = refreshKey
 
 <template>
   <div :key="'attendance-' + localeKey">
-    <AppTopBar :title="t('attendance.title')" />
 
     <main class="px-4 pt-4 space-y-4">
       <!-- Scan QR CTA -->
