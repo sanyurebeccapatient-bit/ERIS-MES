@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// Sibling route ordering for slide direction
+const caregiverRouteOrder = [
+  'caregiver-dashboard',
+  'children',
+  'visits',
+  'notifications',
+]
+
 const routes = [
   {
     path: '/',
@@ -59,7 +67,7 @@ const router = createRouter({
   },
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   if (to.name === 'login' || to.name === 'offline') return true
 
   const { useAuthStore } = await import('@/stores/auth')
@@ -77,10 +85,16 @@ router.beforeEach(async (to) => {
     return { name: 'caregiver-dashboard' }
   }
 
-  // Keep admins/supervisors out of the caregiver app area (e.g. root redirect
-  // or reopening the app while already logged in should land on admin/dashboard)
+  // Keep admins/supervisors out of the caregiver app area
   if (to.path.startsWith('/app') && authStore.isAdminRole) {
     return { name: 'admin-dashboard' }
+  }
+
+  // Store the 'from' route index so TransitionWrapper knows slide direction
+  const fromIdx = caregiverRouteOrder.indexOf(from.name)
+  if (fromIdx >= 0) {
+    to.meta = to.meta || {}
+    to.meta.fromIndex = fromIdx
   }
 
   return true

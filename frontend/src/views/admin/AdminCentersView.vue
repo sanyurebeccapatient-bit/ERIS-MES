@@ -385,7 +385,16 @@ async function submitNewCenter() {
             :class="selectedManagerId === c.id ? 'border-primary-500 bg-primary-50' : 'border-border bg-surface-raised'"
             @click="selectedManagerId = c.id"
           >
-            <div class="w-9 h-9 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-600 font-display font-semibold text-xs flex-shrink-0">
+            <img
+              v-if="c.avatarUrl"
+              :src="resolveMediaUrl(c.avatarUrl)"
+              :alt="c.name"
+              class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+            />
+            <div
+              v-else
+              class="w-9 h-9 rounded-full bg-primary-500/10 flex items-center justify-center text-primary-600 font-display font-semibold text-xs flex-shrink-0"
+            >
               {{ initials(c.name) }}
             </div>
             <div class="min-w-0 flex-1">

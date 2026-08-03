@@ -5,6 +5,8 @@ import { useRouter, useRoute } from 'vue-router'
  * WhatsApp-style horizontal swipe navigation between sibling routes.
  * Swipe right → previous page, swipe left → next page.
  * Only activates on horizontal swipes (not vertical scrolling).
+ * Skips swipe when the gesture starts inside a horizontally scrollable
+ * container (filter pills, etc.) so the user can scroll those freely.
  */
 export function useSwipeNav(routeList) {
   const router = useRouter()
@@ -19,6 +21,20 @@ export function useSwipeNav(routeList) {
     return routeList.findIndex((r) => (typeof r === 'string' ? r : r.name) === name)
   }
 
+  /** Check if the touch target (or any ancestor) is a horizontal scroll container. */
+  function isInsideHScroll(el) {
+    let node = el
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node)
+      const overflowX = style.overflowX
+      if ((overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth) {
+        return true
+      }
+      node = node.parentElement
+    }
+    return false
+  }
+
   function onTouchStart(e) {
     const touch = e.touches[0]
     startX.value = touch.clientX
@@ -29,12 +45,19 @@ export function useSwipeNav(routeList) {
   }
 
   function onTouchMove(e) {
+    // If we're already tracking a swipe, don't let the browser scroll
+    if (swiping.value) {
+      e.preventDefault()
+    }
+
     const touch = e.touches[0]
     deltaX.value = touch.clientX - startX.value
     const deltaY = Math.abs(touch.clientY - startY.value)
 
     // Only start tracking if horizontal movement exceeds vertical
     if (!swiping.value && Math.abs(deltaX.value) > 10 && Math.abs(deltaX.value) > deltaY) {
+      // Don't start a page swipe if we're inside a horizontal scroller
+      if (isInsideHScroll(e.target)) return
       swiping.value = true
     }
 
@@ -73,7 +96,7 @@ export function useSwipeNav(routeList) {
 
   onMounted(() => {
     document.addEventListener('touchstart', onTouchStart, { passive: true })
-    document.addEventListener('touchmove', onTouchMove, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
     document.addEventListener('touchend', onTouchEnd, { passive: true })
   })
 

@@ -32,7 +32,7 @@ export const listChildren = asyncHandler(async (req, res) => {
   if (caregiver) filter.assignedCaregiver = caregiver
   if (search) filter.$text = { $search: search }
 
-  const children = await Child.find(filter).sort({ name: 1 }).limit(500)
+  const children = await Child.find(filter).populate('center', 'name').sort({ name: 1 }).limit(500)
   res.json(children)
 })
 
@@ -81,7 +81,7 @@ export const updateChild = asyncHandler(async (req, res) => {
   // Caregivers cannot move a child to a different center via this endpoint.
   if (['caregiver', 'field_officer'].includes(req.user.role)) delete payload.center
 
-  const child = await Child.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true })
+  const child = await Child.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true }).populate('center', 'name')
   res.json(child)
 })
 

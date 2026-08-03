@@ -2,6 +2,7 @@
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import BottomNav from './BottomNav.vue'
+import TransitionWrapper from './TransitionWrapper.vue'
 import { useSyncStore } from '@/stores/sync'
 import { useDashboardStore } from '@/stores/dashboard'
 import { refreshKey } from '@/i18n/index.js'
@@ -31,7 +32,7 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-surface md:pl-20" :class="showBottomNav ? 'pb-24 md:pb-0' : ''">
-    <router-view :key="localeKey" />
+    <TransitionWrapper />
     <BottomNav v-if="showBottomNav" :key="'bottomnav-' + localeKey" />
   </div>
 </template>

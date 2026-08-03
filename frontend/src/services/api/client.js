@@ -77,16 +77,37 @@ http.interceptors.response.use(
       }
     }
 
-    // Centralized error normalization so UI code always sees the same shape
-    const details = err.response?.data?.details
-    const detailMsg = Array.isArray(details) && details.length
-      ? details.map((d) => d.message).filter(Boolean).join(', ')
-      : ''
+    // Centralized error normalization — short, user-friendly messages
+    const isTimeout = err.code === 'ECONNABORTED' || (err.message || '').includes('timeout')
+    const isOffline = !err.response && !isTimeout
+
+    // Short error messages — never show raw tech text
+    let friendlyMsg
+    if (isTimeout) {
+      friendlyMsg = 'No connection. Check internet and retry.'
+    } else if (isOffline) {
+      friendlyMsg = 'You are offline. Check internet and retry.'
+    } else if (err.response?.status === 429) {
+      friendlyMsg = 'Too many requests. Try again shortly.'
+    } else if (err.response?.status >= 500) {
+      friendlyMsg = 'Server error. Please retry.'
+    } else if (err.response?.status === 403) {
+      friendlyMsg = 'Access denied.'
+    } else if (err.response?.status === 404) {
+      friendlyMsg = 'Not found.'
+    } else {
+      const details = err.response?.data?.details
+      const detailMsg = Array.isArray(details) && details.length
+        ? details.map((d) => d.message).filter(Boolean).join(', ')
+        : ''
+      friendlyMsg = detailMsg || err.response?.data?.message || 'Something went wrong. Tap to retry.'
+    }
+
     const normalized = {
       status: err.response?.status ?? 0,
-      message: detailMsg || err.response?.data?.message || err.message || 'Network error',
-      details,
-      isOffline: !err.response && err.code !== 'ECONNABORTED',
+      message: friendlyMsg,
+      isOffline,
+      isTimeout,
     }
     return Promise.reject(normalized)
   }
