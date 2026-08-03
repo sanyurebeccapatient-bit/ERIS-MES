@@ -55,6 +55,11 @@ export function createCenter(payload) {
   return apiClient.post('/admin/centers', payload)
 }
 
+/** GET /api/admin/centers/:id/children */
+export function listCenterChildren(centerId) {
+  return apiClient.get(`/admin/centers/${centerId}/children`)
+}
+
 /** PATCH /api/admin/centers/:id */
 export function updateCenter(id, payload) {
   return apiClient.patch(`/admin/centers/${id}`, payload)

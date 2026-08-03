@@ -19,6 +19,7 @@ export const useDashboardStore = defineStore('dashboard', {
     healthAlerts: [],
     notifications: [],
     adminSummary: null,
+    _refreshListenerAttached: false,
   }),
   getters: {
     // Only admin-originated alerts are shown to the caregiver — internal
@@ -29,6 +30,29 @@ export const useDashboardStore = defineStore('dashboard', {
       state.notifications.filter((n) => n.type !== 'sync' && !n.read).length,
   },
   actions: {
+    /** Prepend a new notification received via push (live update). */
+    prependNotification(notif) {
+      // Avoid duplicates if the same notification is fetched later
+      const id = notif.id || notif._id
+      if (id && this.notifications.some((n) => (n.id || n._id) === id)) return
+      this.notifications.unshift({
+        ...notif,
+        read: false,
+        time: 'Just now',
+      })
+    },
+
+    /** Attach a one-time listener that refreshes notifications from server
+     *  whenever a 'notification-refresh' event fires (from push or after
+     *  login). Safe to call multiple times. */
+    ensureRefreshListener() {
+      if (this._refreshListenerAttached) return
+      this._refreshListenerAttached = true
+      if (typeof window === 'undefined') return
+      window.addEventListener('notification-refresh', () => {
+        this.loadNotifications().catch(() => {})
+      })
+    },
     async loadNotifications() {
       try {
         this.notifications = await getNotifications()

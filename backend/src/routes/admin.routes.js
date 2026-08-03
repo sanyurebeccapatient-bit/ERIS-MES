@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { listUsers, createUser, updateUser, deactivateUser, resetUserPin, removeUser } from '../controllers/adminUsers.controller.js'
-import { listCenters, createCenter, updateCenter } from '../controllers/centers.controller.js'
+import { listCenters, createCenter, updateCenter, listCenterChildren } from '../controllers/centers.controller.js'
 import { listAuditLog, clearAuditLog } from '../controllers/auditLog.controller.js'
 import {
   listPinResetRequests,
@@ -28,6 +28,7 @@ router.delete('/pin-reset-requests/:id', cancelPinResetRequest)
 router.get('/centers', listCenters)
 router.post('/centers', createCenter)
 router.patch('/centers/:id', updateCenter)
+router.get('/centers/:id/children', listCenterChildren)
 
 router.get('/audit-log', listAuditLog)
 router.delete('/audit-log', requireRole('admin'), clearAuditLog)

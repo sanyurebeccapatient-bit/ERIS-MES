@@ -253,7 +253,7 @@ async function submitNewUser() {
   }
   creating.value = true
   try {
-    await adminService.createUser({ name: name.trim(), phone: toCompactPhone(phone), pin: pin.trim(), role, centerId })
+    await adminService.createUser({ name: name.trim(), phone: toCompactPhone(phone), pin: pin.trim(), role, center: centerId || undefined })
     showAddModal.value = false
     await load()
   } catch (e) {
@@ -336,12 +336,10 @@ async function submitEditUser() {
             @input="onSearchInput"
           />
         </div>
-        <IconAddButton label="Add user" @click="openAddModal" />
+        <div class="flex-shrink-0">
+          <BaseSelect v-model="roleFilter" :options="roleOptions" size="sm" @change="load" />
         </div>
-        <div>
-          <div class="flex-1">
-            <BaseSelect v-model="roleFilter" :options="roleOptions" size="sm" @change="load" />
-          </div>
+        <IconAddButton label="Add user" @click="openAddModal" />
         </div>
       </div>
 

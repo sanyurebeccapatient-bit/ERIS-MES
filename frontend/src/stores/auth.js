@@ -4,6 +4,7 @@ import { USER_ROLES } from '@/constants'
 
 const TOKEN_KEY = 'ecd_auth_token'
 const REFRESH_KEY = 'ecd_refresh_token'
+const USER_KEY = 'ecd_user_data'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -25,8 +26,11 @@ export const useAuthStore = defineStore('auth', {
         const { user, accessToken, refreshToken } = await authService.login(phone, pin)
         localStorage.setItem(TOKEN_KEY, accessToken)
         localStorage.setItem(REFRESH_KEY, refreshToken)
+        localStorage.setItem(USER_KEY, JSON.stringify(user))
         this.user = user
         this.isAuthenticated = true
+        // Trigger notification load + push init after login
+        window.dispatchEvent(new CustomEvent('notification-refresh'))
         return true
       } catch (e) {
         this.error = e.message || 'Login failed. Please check your details and try again.'
@@ -40,12 +44,39 @@ export const useAuthStore = defineStore('auth', {
     async restoreSession() {
       const token = localStorage.getItem(TOKEN_KEY)
       if (!token) return false
+      // Immediately restore cached user data so the UI never flashes login
+      try {
+        const cached = localStorage.getItem(USER_KEY)
+        if (cached) {
+          this.user = JSON.parse(cached)
+          this.isAuthenticated = true
+        }
+      } catch { /* ignore parse errors */ }
+      // Then verify the session is still valid in the background
       try {
         await this.fetchCurrentUser()
         return true
       } catch {
-        this.clearSession()
-        return false
+        // If we have cached user data and a refresh token, try refreshing
+        const refreshToken = localStorage.getItem(REFRESH_KEY)
+        if (refreshToken && this.user) {
+          try {
+            await this.refreshToken()
+            await this.fetchCurrentUser()
+            return true
+          } catch {
+            // Only clear session if we can't refresh either
+            this.clearSession()
+            return false
+          }
+        }
+        // If no cached user, we must show login
+        if (!this.user) {
+          this.clearSession()
+          return false
+        }
+        // Keep the user authenticated with cached data even if API is unreachable
+        return true
       }
     },
 
@@ -54,6 +85,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.user = await authService.getMe()
         this.isAuthenticated = true
+        localStorage.setItem(USER_KEY, JSON.stringify(this.user))
       } finally {
         this.loading = false
       }
@@ -66,6 +98,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const updated = await authService.updateProfile(payload)
         this.user = { ...this.user, ...updated }
+        localStorage.setItem(USER_KEY, JSON.stringify(this.user))
         return true
       } catch (e) {
         this.error = e.message || 'Could not update your profile. Please try again.'
@@ -98,6 +131,7 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(REFRESH_KEY)
+      localStorage.removeItem(USER_KEY)
     },
   },
 })

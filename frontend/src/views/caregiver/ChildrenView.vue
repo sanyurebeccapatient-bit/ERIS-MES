@@ -26,19 +26,32 @@ const authStore = useAuthStore()
 const router = useRouter()
 const { t } = useI18n()
 const loading = ref(true)
+const hasLoaded = ref(false)
 const children = ref([])
 const query = ref('')
 const errorMessage = ref('')
 
 async function load() {
-  loading.value = true
+  if (!hasLoaded.value) loading.value = true
   errorMessage.value = ''
   try {
-    children.value = await listChildren()
+    const fresh = await listChildren()
+    if (hasLoaded.value) {
+      // Merge: add new items, update existing, keep order stable
+      const existingIds = new Set(children.value.map(c => c.id))
+      for (const c of fresh) {
+        const idx = children.value.findIndex(x => x.id === c.id)
+        if (idx !== -1) children.value[idx] = c
+        else children.value.push(c)
+      }
+    } else {
+      children.value = fresh
+    }
   } catch (e) {
     errorMessage.value = e.message || t('common.error')
   } finally {
     loading.value = false
+    hasLoaded.value = true
   }
 }
 
@@ -267,6 +280,16 @@ async function confirmDelete() {
   }
 }
 
+function isRawObjectId(value) {
+  return typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)
+}
+
+function centerNameOf(child) {
+  if (child.center?.name) return child.center.name
+  if (child.center && !isRawObjectId(child.center)) return child.center
+  return '—'
+}
+
 function guardianNameOf(child) {
   return child.guardian?.name || child.guardian || '—'
 }
@@ -483,7 +506,7 @@ const localeKey = refreshKey
           </div>
           <div>
             <p class="text-xs text-ink-faint">{{ t('common.center') }}</p>
-            <p class="text-ink font-medium">{{ activeChild.center?.name || activeChild.center || '—' }}</p>
+            <p class="text-ink font-medium">{{ centerNameOf(activeChild) }}</p>
           </div>
           <div>
             <p class="text-xs text-ink-faint">{{ t('children.healthFlag') }}</p>

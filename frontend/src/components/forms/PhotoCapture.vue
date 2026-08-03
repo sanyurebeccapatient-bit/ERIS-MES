@@ -86,7 +86,7 @@ onBeforeUnmount(() => stopWebcam())
   <div>
     <!-- Preview of captured photo -->
     <div v-if="preview" class="relative rounded-card overflow-hidden border border-border">
-      <img :src="preview" alt="Captured photo" class="w-full h-48 object-cover" />
+      <img :src="preview" alt="Captured photo" class="w-full max-h-48 object-contain rounded-card" />
       <button
         class="absolute top-2 right-2 w-9 h-9 rounded-full bg-ink/60 flex items-center justify-center"
         aria-label="Remove photo"

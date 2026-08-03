@@ -28,11 +28,26 @@ try {
 
 const loading = ref(true)
 const hasLoaded = ref(false)
-const reports = ref([])
+const allReports = ref([])
 const filter = ref('')
 const typeFilter = ref('')
 const search = ref('')
 const actingOn = ref(null)
+
+const reports = computed(() => {
+  let result = allReports.value
+  if (filter.value) result = result.filter((r) => r.status === filter.value)
+  if (typeFilter.value) result = result.filter((r) => r.reportType === typeFilter.value)
+  if (search.value.trim()) {
+    const q = search.value.trim().toLowerCase()
+    result = result.filter((r) =>
+      childNameOf(r).toLowerCase().includes(q) ||
+      (submittedByOf(r) || '').toLowerCase().includes(q) ||
+      (notesOf(r) || '').toLowerCase().includes(q)
+    )
+  }
+  return result
+})
 
 const tabs = [
   { key: '', label: 'All' },
@@ -51,21 +66,10 @@ const typeTabs = [
 ]
 
 let searchTimeout = null
-function onSearchInput() {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(load, 300)
-}
-
 async function load() {
-  // Only blank out to the skeleton on the very first load — filter changes
-  // and searches after that update the list in place, no flash.
   if (!hasLoaded.value) loading.value = true
   try {
-    const params = {}
-    if (filter.value) params.status = filter.value
-    if (typeFilter.value) params.reportType = typeFilter.value
-    if (search.value.trim()) params.search = search.value.trim()
-    reports.value = await adminService.listReports(params)
+    allReports.value = await adminService.listReports()
   } finally {
     loading.value = false
     hasLoaded.value = true
@@ -135,7 +139,7 @@ async function act(report, status) {
   actingOn.value = report.id
   try {
     await adminService.reviewReport(report.id, { status })
-    reports.value = reports.value.filter((r) => r.id !== report.id)
+    allReports.value = allReports.value.filter((r) => r.id !== report.id)
   } finally {
     actingOn.value = null
   }
@@ -272,7 +276,7 @@ async function exportPDF() {
           v-for="tt in typeTabs"
           :key="tt.key"
           :active="typeFilter === tt.key"
-          @click="typeFilter = tt.key; load()"
+          @click="typeFilter = tt.key"
         >
           {{ tt.label }}
         </PillFilterButton>
@@ -285,7 +289,7 @@ async function exportPDF() {
           :key="tab.key"
           class="px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors"
           :class="filter === tab.key ? 'border-primary-500 text-primary-600' : 'border-transparent text-ink-faint hover:text-ink-soft'"
-          @click="filter = tab.key; load()"
+          @click="filter = tab.key"
         >
           {{ tab.label }}
         </button>
@@ -307,7 +311,7 @@ async function exportPDF() {
                 aria-label="View evidence photo"
                 @click="openPhoto(photoOf(report))"
               >
-                <img :src="photoOf(report)" alt="" class="w-full h-full object-cover" />
+                <img :src="photoOf(report)" alt="" class="w-10 h-10 object-cover" />
               </button>
               <span v-else class="w-10 h-10 rounded-xl bg-surface-sunken flex items-center justify-center flex-shrink-0">
                 <ReportTypeIcon :type="report.reportType" />
@@ -323,7 +327,7 @@ async function exportPDF() {
             </div>
           </div>
 
-          <div v-if="filter === 'submitted' || filter === 'under_review'" class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border/60">
+          <div v-if="filter === 'submitted' || filter === 'under_review'" class="flex items-center gap-2 mt-4 pt-4 border-t border-border/60">
             <BaseButton
               variant="primary"
               size="sm"
@@ -338,7 +342,7 @@ async function exportPDF() {
               :disabled="actingOn === report.id"
               @click="act(report, 'under_review')"
             >
-              Mark under review
+              Review
             </BaseButton>
             <BaseButton
               variant="danger"
@@ -357,7 +361,7 @@ async function exportPDF() {
 
     <!-- Photo lightbox -->
     <BaseModal v-model="showPhotoModal" title="Evidence photo" size="md">
-      <img v-if="activePhoto" :src="activePhoto" alt="" class="w-full rounded-xl object-contain max-h-[70vh]" />
+      <img :src="activePhoto" alt="" class="w-full rounded-xl object-contain max-h-[70vh]" />
     </BaseModal>
 
     <!-- Approve / Reject confirmation -->

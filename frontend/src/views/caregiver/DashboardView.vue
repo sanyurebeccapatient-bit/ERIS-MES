@@ -53,6 +53,12 @@ function translateAlertDetail(alert) {
   }
   return alert.detail || ''
 }
+
+function goToVisit(visit) {
+  // Store the visit ID to highlight on the visits page
+  sessionStorage.setItem('highlight_visit_id', visit.id)
+  router.push({ name: 'visits' })
+}
 </script>
 
 <template>
@@ -151,7 +157,7 @@ function translateAlertDetail(alert) {
           <SkeletonBlock v-for="i in 2" :key="i" height="3.5rem" />
         </BaseCard>
         <BaseCard v-else-if="upcomingVisits.length" :padded="false" class="px-3.5">
-          <VisitItem v-for="visit in upcomingVisits" :key="visit.id" :visit="visit" />
+          <VisitItem v-for="visit in upcomingVisits" :key="visit.id" :visit="visit" clickable @click="goToVisit(visit)" />
         </BaseCard>
         <BaseCard v-else :padded="false">
           <EmptyState :title="t('dashboard.noVisits')" :message="t('dashboard.noVisitsDesc')" />

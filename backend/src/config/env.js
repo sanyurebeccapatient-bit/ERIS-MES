@@ -38,6 +38,13 @@ export const env = {
   VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
   VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
   VAPID_SUBJECT: process.env.VAPID_SUBJECT || 'mailto:admin@example.org',
+
+  // Firebase Cloud Messaging — for native Android/iOS push via FCM.
+  // Set FIREBASE_PROJECT_ID (or provide FIREBASE_SERVICE_ACCOUNT_JSON with
+  // the full JSON string from the Firebase console → Service Accounts).
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '',
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') || '',
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || '',
 }
 
 export const isProd = env.NODE_ENV === 'production'

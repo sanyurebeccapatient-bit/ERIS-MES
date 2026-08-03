@@ -31,10 +31,12 @@ app.mount('#app')
 
 // Post-mount: initialize non-critical services
 if (typeof window !== 'undefined') {
-  // Initialize push notifications (non-blocking)
-  import('./services/pushNotifications.js').then(({ initPushNotifications }) => {
-    initPushNotifications().catch(() => {})
-  }).catch(() => {})
+  // Disable pull-to-refresh and overscroll bounce on mobile
+  document.body.style.overscrollBehaviorY = 'none'
+  document.documentElement.style.overscrollBehavior = 'none'
+
+  // Initialize push notifications (non-blocking) — moved to App.vue
+  // so it runs after auth restoration and can wire to the store.
 
   // Start offline sync engine after auth is restored
   import('./services/offline/syncEngine.js').then(({ startAutoSync }) => {

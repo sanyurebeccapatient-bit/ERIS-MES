@@ -536,7 +536,7 @@ const localeKey = refreshKey
           </div>
           <div v-if="form.photo">
             <p class="text-xs text-ink-faint mb-1.5">{{ t('newReport.photoLabel') }}</p>
-            <img :src="form.photo" class="w-full h-32 object-cover rounded-lg" alt="Report photo" />
+            <img :src="form.photo" class="w-full max-h-40 object-contain rounded-lg" alt="Report photo" />
           </div>
           <div v-if="coords">
             <p class="text-xs text-ink-faint">{{ t('newReport.location') }}</p>

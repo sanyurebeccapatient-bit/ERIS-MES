@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, nextTick } from 'vue'
 import { listVisits, createVisit as apiCreateVisit, updateVisit as apiUpdateVisit } from '@/services/api/records.service'
 import { listChildren } from '@/services/api/children.service'
 import { useI18n, refreshKey } from '@/i18n/index.js'
@@ -17,22 +17,42 @@ import { resolveMediaUrl } from '@/utils/mediaUrl.js'
 
 const { t } = useI18n()
 const loading = ref(true)
+const hasLoaded = ref(false)
 const visits = ref([])
 const children = ref([])
 const filter = ref('all')
 const errorMessage = ref('')
 
 async function load() {
-  loading.value = true
+  if (!hasLoaded.value) loading.value = true
   errorMessage.value = ''
   try {
     const [visitsRes, childrenRes] = await Promise.all([listVisits(), listChildren()])
-    visits.value = Array.isArray(visitsRes) ? visitsRes : []
-    children.value = Array.isArray(childrenRes) ? childrenRes : []
+    const freshVisits = Array.isArray(visitsRes) ? visitsRes : []
+    const freshChildren = Array.isArray(childrenRes) ? childrenRes : []
+    if (hasLoaded.value) {
+      // Merge new visits into existing list
+      const existingIds = new Set(visits.value.map(v => v.id))
+      for (const v of freshVisits) {
+        const idx = visits.value.findIndex(x => x.id === v.id)
+        if (idx !== -1) visits.value[idx] = v
+        else visits.value.unshift(v)
+      }
+      const existingChildIds = new Set(children.value.map(c => c.id))
+      for (const c of freshChildren) {
+        const idx = children.value.findIndex(x => x.id === c.id)
+        if (idx !== -1) children.value[idx] = c
+        else if (!existingChildIds.has(c.id)) children.value.push(c)
+      }
+    } else {
+      visits.value = freshVisits
+      children.value = freshChildren
+    }
   } catch (e) {
     errorMessage.value = e.message || t('common.error')
   } finally {
     loading.value = false
+    hasLoaded.value = true
   }
 }
 
@@ -157,6 +177,29 @@ async function markStatus(status) {
 
 // Expose refreshKey to template for reactivity on language change
 const localeKey = refreshKey
+
+// Highlight a visit when navigated from dashboard
+const highlightVisitId = ref(null)
+const visitCardRefs = ref({})
+
+function setVisitRef(el, visitId) {
+  if (el) visitCardRefs.value[visitId] = el
+}
+
+onMounted(() => {
+  const hid = sessionStorage.getItem('highlight_visit_id')
+  if (hid) {
+    sessionStorage.removeItem('highlight_visit_id')
+    highlightVisitId.value = hid
+    nextTick(() => {
+      setTimeout(() => {
+        const el = visitCardRefs.value[hid]
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setTimeout(() => { highlightVisitId.value = null }, 3000)
+      }, 500)
+    })
+  }
+})
 </script>
 
 <template>
@@ -195,7 +238,15 @@ const localeKey = refreshKey
       </div>
 
       <div v-else-if="filtered.length" class="space-y-2.5">
-        <BaseCard v-for="visit in filtered" :key="visit.id" interactive @click="openDetail(visit)">
+        <BaseCard
+          v-for="visit in filtered"
+          :key="visit.id"
+          interactive
+          :ref="(el) => setVisitRef(el, visit.id)"
+          class="transition-all duration-500"
+          :class="highlightVisitId === visit.id ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface' : ''"
+          @click="openDetail(visit)"
+        >
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3 min-w-0">
               <img

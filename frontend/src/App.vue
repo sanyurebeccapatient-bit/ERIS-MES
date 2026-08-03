@@ -1,24 +1,43 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { refreshKey } from '@/i18n/index.js'
+import { useDashboardStore } from '@/stores/dashboard'
+import { useAuthStore } from '@/stores/auth'
+import NotificationToast from '@/components/ui/NotificationToast.vue'
+
+const toastRef = ref(null)
 
 onMounted(async () => {
-  // Service worker registration is handled once in main.js via
-  // vite-plugin-pwa's virtual:pwa-register module (which points at the
-  // correctly built/hashed service worker with the Workbox manifest
-  // injected). Registering '/sw.js' directly here as well used to create a
-  // second, conflicting registration pointing at the raw unbuilt source
-  // file, which could fail silently and prevent the PWA install prompt
-  // from ever becoming available — so that call has been removed.
+  const dashboardStore = useDashboardStore()
+  const authStore = useAuthStore()
 
-  // Initialize push notifications
+  // Attach the live notification-refresh listener (re-fetches from server
+  // whenever a push arrives, so the badge count stays accurate)
+  dashboardStore.ensureRefreshListener()
+
+  // Initialize push notifications (Capacitor FCM or Web Push)
   try {
     const { initPushNotifications } = await import('@/services/pushNotifications.js')
     await initPushNotifications()
   } catch { /* non-critical */ }
+
+  // Wire push-notification events to both the toast and the store
+  function onPushNotification(event) {
+    const data = event.detail || {}
+    // Show toast
+    if (toastRef.value) {
+      toastRef.value.push(data)
+    }
+    // Update store immediately for live badge count
+    if (authStore.isAuthenticated) {
+      dashboardStore.prependNotification(data)
+    }
+  }
+  window.addEventListener('push-notification', onPushNotification)
 })
 </script>
 
 <template>
   <router-view :key="refreshKey" />
+  <NotificationToast ref="toastRef" />
 </template>

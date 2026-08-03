@@ -1,12 +1,18 @@
 /**
  * Push Notification Service
  * -----------------------------------------------------------------------
- * Handles both Web Push (browser) and Capacitor Push (Android/iOS).
+ * Handles both Web Push (browser/PWA) and Capacitor FCM (Android/iOS).
+ *
+ * For native devices the Capacitor PushNotifications plugin provides
+ * the FCM registration token which we send to the backend so it can
+ * deliver notifications via firebase-admin.
+ *
+ * For browsers we use the standard Web Push API with VAPID keys.
  *
  * IMPORTANT: This file does NOT import from `@capacitor/push-notifications`
  * because that package may not be installed during browser dev. Instead, it
  * accesses the plugin through `window.Capacitor.Plugins.PushNotifications`
- * which is registered by the native bridge at runtime — no npm import needed.
+ * which is registered by the native bridge at runtime.
  * -----------------------------------------------------------------------
  */
 
@@ -71,34 +77,61 @@ async function subscribeCapacitor() {
   if (!PushNotifications) return
 
   try {
+    // Create the Android notification channel (WhatsApp-style channel)
+    try {
+      await PushNotifications.createChannel({
+        id: 'eris_messages',
+        name: 'Messages',
+        description: 'Notifications from ERIS MES',
+        importance: 4, // HIGH
+        visibility: 1, // PUBLIC
+        sound: 'default',
+        vibration: true,
+      })
+    } catch {
+      // Channel may already exist — non-critical
+    }
+
     PushNotifications.addListener('registration', async (token) => {
       try {
         const { apiClient } = await import('./api/client.js')
+        // Send as FCM token with platform info
         await apiClient.post('/notifications/subscribe', {
           token: token.value,
           platform: 'android',
         })
+        console.log('[push] FCM token registered')
       } catch {
         // Non-critical
       }
     })
 
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      // Dispatch to UI layer
+      console.log('[push] Foreground notification:', notification.title)
+
+      // Dispatch to UI layer for the toast component
       window.dispatchEvent(new CustomEvent('push-notification', {
         detail: {
           title: notification.title,
           body: notification.body,
           data: notification.data,
+          type: notification.data?.type || 'system',
         },
       }))
+
+      // Also trigger a store refresh so the badge count updates immediately
+      window.dispatchEvent(new CustomEvent('notification-refresh'))
     })
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
       const data = notification.notification?.data || {}
-      if (data.route) {
-        const router = window.__vue_router__
-        if (router) router.push(data.route)
+      const router = window.__vue_router__
+      if (router) {
+        if (data.route) {
+          router.push(data.route)
+        } else {
+          router.push({ name: 'notifications' })
+        }
       }
     })
 
@@ -143,6 +176,8 @@ export function listenForMessages() {
     const { type, data } = event.data || {}
     if (type === 'PUSH_NOTIFICATION') {
       window.dispatchEvent(new CustomEvent('push-notification', { detail: data }))
+      // Also trigger a store refresh
+      window.dispatchEvent(new CustomEvent('notification-refresh'))
     }
   })
 }

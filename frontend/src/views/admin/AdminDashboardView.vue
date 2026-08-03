@@ -52,12 +52,14 @@ watch(trendRange, () => loadDashboard())
 
 onMounted(async () => {
   loadDashboard()
-  try {
-    recentAlerts.value = (await getHealthAlerts())
-      .filter(a => a.status !== 'resolved')
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 5)
-  } catch { /* alerts will remain empty */ }
+  if (!recentAlerts.value.length) {
+    try {
+      recentAlerts.value = (await getHealthAlerts())
+        .filter(a => a.status !== 'resolved')
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5)
+    } catch { /* alerts will remain empty */ }
+  }
 })
 </script>
 

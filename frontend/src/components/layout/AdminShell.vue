@@ -1,6 +1,15 @@
 <script setup>
 import AdminSidebar from './AdminSidebar.vue'
 import AdminBottomNav from './AdminBottomNav.vue'
+import { useSwipeNav } from '@/composables/useSwipeNav.js'
+
+const adminRoutes = [
+  'admin-dashboard',
+  'admin-caregivers',
+  'admin-reports',
+  'admin-alerts',
+]
+useSwipeNav(adminRoutes)
 </script>
 
 <template>

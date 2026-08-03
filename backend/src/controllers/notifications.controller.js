@@ -2,6 +2,7 @@ import Notification from '../models/Notification.js'
 import User from '../models/User.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { AppError } from '../utils/AppError.js'
+import { notifyUsers } from '../services/notificationService.js'
 
 /** GET /api/notifications */
 export const listNotifications = asyncHandler(async (req, res) => {
@@ -21,13 +22,48 @@ export const markRead = asyncHandler(async (req, res) => {
   res.json(notification)
 })
 
-/** POST /api/notifications/subscribe — register a Web Push subscription for this device */
+/**
+ * POST /api/notifications/subscribe
+ *
+ * Accepts two formats:
+ *  1. Web Push subscription: { endpoint, keys: { p256dh, auth } }
+ *  2. FCM device token:      { token, platform: 'android'|'ios' }
+ */
 export const subscribePush = asyncHandler(async (req, res) => {
-  const subscription = req.body
-  await User.findByIdAndUpdate(req.user._id, {
-    $addToSet: { pushSubscriptions: subscription },
-  })
-  res.status(201).json({ message: 'Subscribed' })
+  const body = req.body
+
+  // FCM token from Capacitor native app
+  if (body.token && body.platform) {
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { fcmTokens: { token: body.token, platform: body.platform } },
+    })
+    return res.status(201).json({ message: 'FCM token registered' })
+  }
+
+  // Web Push subscription (endpoint + keys)
+  if (body.endpoint && body.keys) {
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { pushSubscriptions: body },
+    })
+    return res.status(201).json({ message: 'Web push subscription registered' })
+  }
+
+  throw new AppError('Invalid push subscription payload', 400)
+})
+
+/**
+ * POST /api/notifications/unsubscribe
+ * Remove a specific device token or web-push subscription.
+ */
+export const unsubscribePush = asyncHandler(async (req, res) => {
+  const { token, endpoint } = req.body
+  const update = {}
+  if (token) update.$pull = { fcmTokens: { token } }
+  else if (endpoint) update.$pull = { pushSubscriptions: { endpoint } }
+  else throw new AppError('Provide token or endpoint to unsubscribe', 400)
+
+  await User.findByIdAndUpdate(req.user._id, update)
+  res.json({ message: 'Unsubscribed' })
 })
 
 /** GET /api/notifications/admin — admin lists all users' notifications */
@@ -53,7 +89,10 @@ export const adminNotificationStats = asyncHandler(async (req, res) => {
   res.json({ total, unread, byType })
 })
 
-/** POST /api/notifications/admin — admin sends notification to user(s) */
+/**
+ * POST /api/notifications/admin — admin sends notification to user(s)
+ * Creates in-app records AND delivers push notifications (FCM + web-push).
+ */
 export const adminSendNotification = asyncHandler(async (req, res) => {
   const { userIds, title, body, type } = req.body
   if (!title) throw new AppError('Title is required', 400)
@@ -62,15 +101,10 @@ export const adminSendNotification = asyncHandler(async (req, res) => {
   }
 
   const validType = ['health', 'visit', 'system', 'report', 'alert'].includes(type) ? type : 'system'
-  const notifications = await Notification.insertMany(
-    userIds.map(uid => ({
-      user: uid,
-      title,
-      body: body || '',
-      type: validType,
-      sentBy: req.user._id,
-    }))
-  )
+
+  // This creates DB records AND fires push to every user's devices
+  const notifications = await notifyUsers(userIds, { title, body: body || '', type: validType })
+
   res.status(201).json({ created: notifications.length })
 })
 

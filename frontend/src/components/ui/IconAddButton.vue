@@ -13,7 +13,7 @@ defineEmits(['click'])
 <template>
   <button
     type="button"
-    class="w-9 h-9 rounded-full bg-primary-500 text-white flex items-center justify-center flex-shrink-0 active:bg-primary-600 disabled:opacity-60 transition-colors"
+    class="w-9 h-9 rounded-full bg-primary-500 text-white flex items-center justify-center flex-shrink-0 active:bg-primary-600 disabled:opacity-60 transition-colors self-center"
     :aria-label="label"
     :disabled="disabled"
     @click="$emit('click', $event)"

@@ -18,7 +18,7 @@ const variants = {
 }
 
 const sizes = {
-  sm: 'h-10 px-4 text-sm rounded-xl',
+  sm: 'h-8 px-3 text-xs rounded-lg flex-1 min-w-0',
   md: 'h-touch px-5 text-base rounded-xl',
   lg: 'h-touch-lg px-6 text-lg rounded-2xl',
 }

@@ -3,6 +3,7 @@ import {
   listNotifications,
   markRead,
   subscribePush,
+  unsubscribePush,
   adminListNotifications,
   adminNotificationStats,
   adminSendNotification,
@@ -19,6 +20,7 @@ router.get('/', listNotifications)
 router.patch('/:id/read', markRead)
 router.delete('/', clearNotifications)
 router.post('/subscribe', subscribePush)
+router.post('/unsubscribe', unsubscribePush)
 
 // Admin endpoints
 router.get('/admin', requireAdmin, adminListNotifications)

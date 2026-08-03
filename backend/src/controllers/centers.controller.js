@@ -43,7 +43,15 @@ export const createCenter = asyncHandler(async (req, res) => {
 
 /** PATCH /api/centers/:id */
 export const updateCenter = asyncHandler(async (req, res) => {
-  const center = await Center.findByIdAndUpdate(req.params.id, sanitizeLocation(req.body), { new: true, runValidators: true })
+  const center = await Center.findByIdAndUpdate(req.params.id, sanitizeLocation(req.body), { new: true, runValidators: true }).populate('manager', 'name phone')
   if (!center) throw new AppError('Center not found', 404)
   res.json(center)
+})
+
+/** GET /api/admin/centers/:id/children */
+export const listCenterChildren = asyncHandler(async (req, res) => {
+  const children = await Child.find({ center: req.params.id, isActive: true })
+    .select('name age gender photoUrl guardian')
+    .sort({ name: 1 })
+  res.json(children)
 })

@@ -73,6 +73,8 @@ function openSendModal() {
   showSendModal.value = true
 }
 
+const sendSuccess = ref('')
+
 async function sendNotification() {
   if (!newNotification.value.title.trim()) {
     sendError.value = 'Title is required.'
@@ -84,13 +86,15 @@ async function sendNotification() {
   }
   sending.value = true
   sendError.value = ''
+  sendSuccess.value = ''
   try {
-    await adminService.sendNotification({
+    const res = await adminService.sendNotification({
       userIds: selectedUserIds.value,
       title: newNotification.value.title.trim(),
       body: newNotification.value.body.trim(),
       type: newNotification.value.type,
     })
+    sendSuccess.value = `Delivered to ${res.created || selectedUserIds.value.length} recipient(s) via push notification.`
     showSendModal.value = false
     await load()
   } catch (e) {
@@ -180,6 +184,10 @@ function toggleSelectAll() {
 
     <main class="p-4 md:p-6 space-y-5 max-w-[1000px]">
       <!-- Stats strip -->
+      <div v-if="sendSuccess" class="bg-success-500/10 border border-success-500/30 rounded-xl px-4 py-2.5 text-sm text-success-700 font-medium">
+        {{ sendSuccess }}
+      </div>
+
       <div v-if="!loading" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <BaseCard class="text-center !py-3">
           <p class="text-xl font-display font-bold text-ink">{{ stats.total }}</p>

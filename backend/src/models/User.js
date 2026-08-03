@@ -30,6 +30,15 @@ const userSchema = new Schema(
       },
     ],
 
+    // FCM device tokens for Android/iOS push notifications
+    fcmTokens: [
+      {
+        token: { type: String, required: true },
+        platform: { type: String, enum: ['android', 'ios'], default: 'android' },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+
     refreshTokens: [
       {
         token: { type: String, select: false },
